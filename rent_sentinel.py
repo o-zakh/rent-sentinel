@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Telegram Rent Sentinel - Автоматический фильтр квартир на Телефоне
+Сгенерировано в консоли: 07.06.2026
+
+Данный скрипт запускает телеграм-юзербота, который слушает входящие сообщения
+в выбранных группах, фильтрует по бюджету, разрешению на питомцев и вашим
+ключевым словам, после чего пересылает отобранные варианты в ваш приватный канал.
+"""
+
 import os
 import re
 import json
@@ -6,16 +17,25 @@ from telethon import TelegramClient, events
 
 # ================= НАСТРОЙКИ С ПАНЕЛИ УПРАВЛЕНИЯ =================
 
-# Для работы вам понадобятся API_ID и API_HASH (получите их на my.telegram.org)
-API_ID = int(os.getenv("TELEGRAM_API_ID", API_KEY))
-API_HASH = os.getenv("TELEGRAM_API_HASH", API_HASH)
-SESSION_NAME = STRING_SESSION
+# Для работы вам понадобятся API_ID/API_HASH и/или STRING_SESSION.
+# Поддерживаем различные названия переменных окружения для удобства развертывания (включая bothost.ru)
+api_id_env = os.getenv("TELEGRAM_API_ID", os.getenv("API_KEY", os.getenv("API_ID", "")))
+if api_id_env and api_id_env.strip().isdigit():
+    API_ID = int(api_id_env.strip())
+else:
+    API_ID = 1234567 # Значение по умолчанию
+
+API_HASH = os.getenv("TELEGRAM_API_HASH", os.getenv("API_HASH", "ваш_api_hash_из_telegram"))
+SESSION_NAME = "rent_sentinel_session"
+
+# Если используется файл сессии в виде строки (String Session), загружаем её во избежание EOFError на сервере
+SESSION_STRING = os.getenv("TELEGRAM_STRING_SESSION", os.getenv("STRING_SESSION", ""))
 
 # Список отслеживаемых групп и каналов (только активные)
-TRACKED_CHATS = ['@Relocation_Erevan', '@arendaVyerevanee', '@Arenda_kvartir_yerevan', '@arenda_erevan_kvartira_evn', '@kvartiry_yerevan']
+TRACKED_CHATS = ['@Relocation_Erevan', '@arendaVyerevanee', '@Arenda_kvartir_yerevan', '@arenda_erevan_kvartira_evn', '@myOwnGroup4651']
 
 # Целевой чат/канал для отправки одобренных предложений
-FORWARD_TARGET_CHAT = '@myOwnGroup4651'
+FORWARD_TARGET_CHAT = '@my_filtered_apartments'
 
 # Параметры фильтрации
 MAX_RENT_PRICE = 250000
@@ -143,7 +163,15 @@ def check_listing_by_rules(text: str):
 
 
 # Создаем инстанс Telegram Client (Userbot)
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+if SESSION_STRING:
+    from telethon.sessions import StringSession
+    try:
+        client = TelegramClient(StringSession(SESSION_STRING.strip()), API_ID, API_HASH)
+    except Exception as e:
+        print(f"❌ Ошибка инициализации StringSession (проверьте корректность строки): {e}")
+        client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+else:
+    client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
 
 @client.on(events.NewMessage(chats=TRACKED_CHATS))
 async def incoming_message_handler(event):
@@ -225,8 +253,37 @@ async def incoming_message_handler(event):
 
 async def main():
     print("🤖 Запуск Telegram Rent Sentinel Userbot...")
-    await client.start()
-    print("✅ Юзербот успешно авторизован и запущен!")
+    # Подключаемся к серверам Telegram без автоматического интерактивного ввода start()
+    print("🔌 Подключение к серверам Telegram...")
+    try:
+        await client.connect()
+    except Exception as e:
+        print(f"❌ Не удалось подключиться к Telegram: {e}")
+        return
+
+    # Проверяем, авторизован ли пользователь (для файлов .session или StringSession)
+    is_authorized = False
+    try:
+        is_authorized = await client.is_user_authorized()
+    except Exception as e:
+        print(f"❌ Ошибка проверки статуса авторизации: {e}")
+
+    if not is_authorized:
+        print("❌ ОШИБКА АВТОРИЗАЦИИ!")
+        print("Текущая сессия не авторизована.")
+        if SESSION_STRING:
+            print("Переданная STRING_SESSION недействительна, пуста или срок её действия истек.")
+            print("Пожалуйста, убедитесь в правильности STRING_SESSION.")
+        else:
+            print("Поскольку скрипт запущен на удаленном сервере без интерактивного терминала (non-interactive),")
+            print("Telegram не может запросить у вас номер телефона и код подтверждения (ошибка EOFError).")
+            print(" РЕШЕНИЕ:")
+            print("1. Получите STRING_SESSION, запустив этот скрипт локально на ПК с терминалом, где вы сможете пройти авторизацию один раз.")
+            print("2. Либо используйте специальный скрипт/веб-инструмент для генерации Telethon String Session, скопируйте её")
+            print("   и передайте на сервер в переменную окружения STRING_SESSION.")
+        return
+
+    print("✅ Юзербот успешно авторизован и запущен в фоновом режиме!")
     print(f"📡 Прослушивание чатов: {', '.join(TRACKED_CHATS)}")
     await client.run_until_disconnected()
 
