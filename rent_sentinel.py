@@ -26,7 +26,7 @@ else:
     API_ID = 1234567 # Значение по умолчанию
 
 API_HASH = os.getenv("TELEGRAM_API_HASH", os.getenv("API_HASH", "ваш_api_hash_из_telegram"))
-SESSION_NAME = "rent_sentinel_session"
+SESSION_NAME = os.getenv("TELEGRAM_SESSION_NAME", "rent_sentinel_session")
 
 # Если используется файл сессии в виде строки (String Session), загружаем её во избежание EOFError на сервере
 SESSION_STRING = os.getenv("TELEGRAM_STRING_SESSION", os.getenv("STRING_SESSION", ""))
@@ -35,7 +35,7 @@ SESSION_STRING = os.getenv("TELEGRAM_STRING_SESSION", os.getenv("STRING_SESSION"
 TRACKED_CHATS = ['@Relocation_Erevan', '@arendaVyerevanee', '@Arenda_kvartir_yerevan', '@arenda_erevan_kvartira_evn', '@myOwnGroup4651']
 
 # Целевой чат/канал для отправки одобренных предложений
-FORWARD_TARGET_CHAT = '@my_filtered_apartments'
+FORWARD_TARGET_CHAT = '@myOwnGroup4651'
 
 # Параметры фильтрации
 MAX_RENT_PRICE = 250000
@@ -258,7 +258,20 @@ async def main():
     try:
         await client.connect()
     except Exception as e:
+        err_msg = str(e)
         print(f"❌ Не удалось подключиться к Telegram: {e}")
+        if "different ip addresses" in err_msg.lower() or "authorization key" in err_msg.lower() or "simultaneously" in err_msg.lower():
+            print("🚨 ОБНАРУЖЕН ПЕРЕНОС СЕССИИ ИЛИ КОНФЛИКТ IP-АДРЕСОВ!")
+            print("Telegram принудительно аннулировал (забанил) этот ключ авторизации (session key),")
+            print("потому что зафиксировал одновременный вход с двух разных IP-адресов.")
+            print("🛠️ КАК ИСПРАВИТЬ ЭТО ЗА 4 ПРОСТЫХ ШАГА:")
+            print("1. Полностью остановите бота на вашем локальном ПК, в других вкладках или на других серверах.")
+            print("2. Если вы используете STRING_SESSION: этот ключ ОКОНЧАТЕЛЬНО СГОРЕЛ и больше не сработает.")
+            print("   Вам нужно сгенерировать новую STRING_SESSION заново.")
+            print("3. Если вы используете файл .session на сервере (например, bothost.ru):")
+            print("   удалите файл '" + SESSION_NAME + ".session' и запустите бота заново.")
+            print("4. Чтобы принудительно начать чистую новую сессию, добавьте в переменные окружения на хостинге")
+            print("   новую уникальную переменную: TELEGRAM_SESSION_NAME='rent_sentinel_new_session_v2'")
         return
 
     # Проверяем, авторизован ли пользователь (для файлов .session или StringSession)
@@ -277,7 +290,7 @@ async def main():
         else:
             print("Поскольку скрипт запущен на удаленном сервере без интерактивного терминала (non-interactive),")
             print("Telegram не может запросить у вас номер телефона и код подтверждения (ошибка EOFError).")
-            print(" РЕШЕНИЕ:")
+            print("💡 РЕШЕНИЕ:")
             print("1. Получите STRING_SESSION, запустив этот скрипт локально на ПК с терминалом, где вы сможете пройти авторизацию один раз.")
             print("2. Либо используйте специальный скрипт/веб-инструмент для генерации Telethon String Session, скопируйте её")
             print("   и передайте на сервер в переменную окружения STRING_SESSION.")

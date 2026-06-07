@@ -3,8 +3,8 @@ from telethon.sessions import StringSession
 
 # Define your Telegram API credentials
 # (Required by the client wrapper, though not used to overwrite the file)
-API_ID = 38013664  
-API_HASH = 'f8fd7ef3c0cc1d5bac4859d3ae106448'
+API_ID = 38562762  
+API_HASH = 'e8abffbb4e47431493774154c7209f43'
 
 # Load your local '.session' file (omit the '.session' extension from the name)
 # If your file is named 'my_account.session', use 'my_account'

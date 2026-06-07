@@ -3,3 +3,4 @@ request
 rent_sentinel_session.session
 rent_sentinel_session.session-journal
 original_rent_sentinel.py
+sessionGenerator.py
