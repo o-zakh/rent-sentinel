@@ -1,14 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Telegram Rent Sentinel - Автоматический фильтр квартир на Телефоне
-Сгенерировано в консоли: 06.06.2026
-
-Данный скрипт запускает телеграм-юзербота, который слушает входящие сообщения
-в выбранных группах, фильтрует по бюджету, разрешению на питомцев и вашим
-ключевым словам, после чего пересылает отобранные варианты в ваш приватный канал.
-"""
-
 import os
 import re
 import json
@@ -18,9 +7,9 @@ from telethon import TelegramClient, events
 # ================= НАСТРОЙКИ С ПАНЕЛИ УПРАВЛЕНИЯ =================
 
 # Для работы вам понадобятся API_ID и API_HASH (получите их на my.telegram.org)
-API_ID = int(os.getenv("TELEGRAM_API_ID", "38013664"))
-API_HASH = os.getenv("TELEGRAM_API_HASH", "f8fd7ef3c0cc1d5bac4859d3ae106448")
-SESSION_NAME = "rent_sentinel_session"
+API_ID = int(os.getenv("TELEGRAM_API_ID", API_KEY))
+API_HASH = os.getenv("TELEGRAM_API_HASH", API_HASH)
+SESSION_NAME = STRING_SESSION
 
 # Список отслеживаемых групп и каналов (только активные)
 TRACKED_CHATS = ['@Relocation_Erevan', '@arendaVyerevanee', '@Arenda_kvartir_yerevan', '@arenda_erevan_kvartira_evn', '@kvartiry_yerevan']
