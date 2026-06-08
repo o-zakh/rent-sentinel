@@ -120,11 +120,11 @@ def extract_amd_price(text: str) -> int:
     # Ищем подходящую под диапазон 100000 - 250000 последнюю сумму
     range_candidates = [v for v in all_vals if 100000 <= v <= 250000]
     if range_candidates:
-         return range_candidates[-1]
+         return range_candidates[0]
          
     # Если нет подходящих сумм, возвращаем последнюю найденную сумму в тексте (например, 300000), 
     # чтобы отфильтровать ее с детальным выводом ошибки
-    return all_vals[-1]
+    return all_vals[0]
 
 def check_listing_by_rules(text: str):
     """
